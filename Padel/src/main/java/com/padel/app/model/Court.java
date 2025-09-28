@@ -1,7 +1,6 @@
 package com.padel.app.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.util.List;
 
@@ -18,7 +17,7 @@ public class Court {
     private User owner;   // Dueño de la cancha
 
     @Column(nullable = false, length = 100)
-    private String nombre;
+    private String courtName;
 
     @Column(nullable = false, length = 255)
     private String direccion;
@@ -34,10 +33,10 @@ public class Court {
     public Court() {
     }
 
-    public Court(Long id, User owner, String nombre, String direccion, Double lat, Double lng, Double price, List<Booking> bookings) {
+    public Court(Long id, User owner, String courtName, String direccion, Double lat, Double lng, Double price, List<Booking> bookings) {
         this.id = id;
         this.owner = owner;
-        this.nombre = nombre;
+        this.courtName = courtName;
         this.direccion = direccion;
         this.lat = lat;
         this.lng = lng;
@@ -61,12 +60,12 @@ public class Court {
         this.owner = owner;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getCourtName() {
+        return courtName;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setCourtName(String courtName) {
+        this.courtName = courtName;
     }
 
     public String getDireccion() {

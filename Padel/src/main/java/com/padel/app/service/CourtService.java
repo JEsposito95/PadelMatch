@@ -58,7 +58,7 @@ public class CourtService {
     private CourtResponseDTO mapToResponseDTO(Court court) {
         return new CourtResponseDTO(
                 court.getId(),
-                court.getNombre(),
+                court.getCourtName(),
                 court.getDireccion(),
                 court.getLat(),
                 court.getLng(),
