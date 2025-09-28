@@ -1,0 +1,21 @@
+package com.padel.app.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record CourtDTO(
+        @NotBlank(message = "El nombre de la cancha no puede estar vacío")
+        String nombre,
+
+        @NotBlank(message = "La dirección no puede estar vacía")
+        String direccion,
+
+        Double lat,
+        Double lng,
+
+        @NotNull(message = "El precio no puede ser nulo")
+        Double price,
+
+        @NotNull(message = "El ID del dueño es obligatorio")
+        Long ownerId
+) {}
