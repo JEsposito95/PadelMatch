@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/courts")
@@ -41,4 +42,21 @@ public class CourtController {
         courtService.deleteCourt(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CourtResponseDTO> updateCourt(
+            @PathVariable Long id,
+            @Valid @RequestBody CourtDTO dto
+    ) {
+        return ResponseEntity.ok(courtService.updateCourt(id, dto));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<CourtResponseDTO> updateCourtPartial(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> updates
+    ) {
+        return ResponseEntity.ok(courtService.updateCourtPartial(id, updates));
+    }
+
 }
