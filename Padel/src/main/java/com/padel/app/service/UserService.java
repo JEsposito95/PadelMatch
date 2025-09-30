@@ -5,9 +5,11 @@ import com.padel.app.dto.UserResponseDTO;
 import com.padel.app.model.User;
 import com.padel.app.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -46,9 +48,44 @@ public class UserService {
         return mapToResponseDTO(userRepository.save(user));
     }
 
+    //Eliminar Usuario
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
+
+    //Modificar usuario completo
+    @Transactional
+    public UserResponseDTO updateUser(Long id, UserDTO dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        user.setNombre(dto.nombre());
+        user.setEmail(dto.email());
+        user.setPassword(dto.password()); // ⚠️ luego encriptamos
+        user.setFotoUrl(dto.fotoUrl());
+
+        return mapToResponseDTO(userRepository.save(user));
+    }
+
+    //Modificar usuario parcialmente
+    @Transactional
+    public UserResponseDTO updateUserPartial(Long id, Map<String, Object> updates) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        updates.forEach((key, value) -> {
+            switch (key) {
+                case "nombre" -> user.setNombre((String) value);
+                case "email" -> user.setEmail((String) value);
+                case "password" -> user.setPassword((String) value);
+                case "fotoUrl" -> user.setFotoUrl((String) value);
+                default -> throw new RuntimeException("Campo no permitido: " + key);
+            }
+        });
+
+        return mapToResponseDTO(userRepository.save(user));
+    }
+
 
     private UserResponseDTO mapToResponseDTO(User user) {
         return new UserResponseDTO(
