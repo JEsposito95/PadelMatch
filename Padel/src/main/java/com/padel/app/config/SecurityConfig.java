@@ -13,7 +13,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Desactiva CSRF para pruebas con Postman
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Permite todas las peticiones sin autenticación
+//                        .requestMatchers("/api/courts/**").hasAnyRole("OWNER", "ADMIN")
+//                        .requestMatchers("/api/bookings/**").hasAnyRole("USER", "OWNER", "ADMIN")
+//                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .anyRequest().permitAll()
                 );
         return http.build();
     }
