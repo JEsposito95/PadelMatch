@@ -9,8 +9,11 @@ import com.padel.app.repository.BookingRepository;
 import com.padel.app.repository.CourtRepository;
 import com.padel.app.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -58,6 +61,68 @@ public class BookingService {
 
     public void deleteBooking(Long id) {
         bookingRepository.deleteById(id);
+    }
+
+    @Transactional
+    public BookingResponseDTO updateBooking(Long id, BookingDTO dto) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (dto.startTime().isAfter(dto.endTime())) {
+            throw new RuntimeException("Start time must be before end time");
+        }
+
+        Court court = courtRepository.findById(dto.courtId())
+                .orElseThrow(() -> new RuntimeException("Court not found"));
+
+        User user = userRepository.findById(dto.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        booking.setCourt(court);
+        booking.setCreatedBy(user);
+        booking.setStartTime(dto.startTime());
+        booking.setEndTime(dto.endTime());
+
+        System.out.printf("Booking %d updated: Court=%s User=%s Start=%s End=%s%n",
+                booking.getId(), court.getCourtName(), user.getNombre(),
+                booking.getStartTime(), booking.getEndTime());
+
+        return mapToResponseDTO(bookingRepository.save(booking));
+    }
+
+    @Transactional
+    public BookingResponseDTO updateBookingPartial(Long id, Map<String, Object> updates) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        updates.forEach((key, value) -> {
+            switch (key) {
+                case "courtId" -> {
+                    Long courtId = Long.parseLong(value.toString());
+                    Court court = courtRepository.findById(courtId)
+                            .orElseThrow(() -> new RuntimeException("Court not found"));
+                    booking.setCourt(court);
+                }
+                case "userId" -> {
+                    Long userId = Long.parseLong(value.toString());
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+                    booking.setCreatedBy(user);
+                }
+                case "startTime" -> booking.setStartTime(LocalDateTime.parse(value.toString()));
+                case "endTime" -> booking.setEndTime(LocalDateTime.parse(value.toString()));
+                case "status" -> booking.setStatus(Booking.Status.valueOf(value.toString().toUpperCase()));
+                default -> throw new RuntimeException("Campo no permitido: " + key);
+            }
+        });
+
+        if (booking.getStartTime().isAfter(booking.getEndTime())) {
+            throw new RuntimeException("Start time must be before end time");
+        }
+
+        System.out.printf("Booking %d partially updated: %s%n", booking.getId(), updates);
+
+        return mapToResponseDTO(bookingRepository.save(booking));
     }
 
     private BookingResponseDTO mapToResponseDTO(Booking booking) {

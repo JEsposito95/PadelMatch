@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -41,4 +42,21 @@ public class BookingController {
         bookingService.deleteBooking(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BookingResponseDTO> updateBooking(
+            @PathVariable Long id,
+            @Valid @RequestBody BookingDTO dto
+    ) {
+        return ResponseEntity.ok(bookingService.updateBooking(id, dto));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<BookingResponseDTO> updateBookingPartial(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> updates
+    ) {
+        return ResponseEntity.ok(bookingService.updateBookingPartial(id, updates));
+    }
+
 }
