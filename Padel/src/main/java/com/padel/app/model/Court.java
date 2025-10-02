@@ -2,6 +2,7 @@ package com.padel.app.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -10,46 +11,53 @@ public class Court {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long idCourt;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;   // Dueño de la cancha
+    private User owner;
 
     @Column(nullable = false, length = 100)
-    private String courtName;
+    private String nameCourt;
 
     @Column(nullable = false, length = 255)
-    private String direccion;
+    private String direction;
 
     private Double lat;
     private Double lng;
 
+    @Column(name = "price", precision = 10, scale = 2)
     private Double price;
 
     @OneToMany(mappedBy = "court", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Booking> bookings;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     public Court() {
     }
 
-    public Court(Long id, User owner, String courtName, String direccion, Double lat, Double lng, Double price, List<Booking> bookings) {
-        this.id = id;
+    public Court(Long idCourt, User owner, String nameCourt, String direction, Double lat, Double lng, Double price, List<Booking> bookings) {
+        this.idCourt = idCourt;
         this.owner = owner;
-        this.courtName = courtName;
-        this.direccion = direccion;
+        this.nameCourt = nameCourt;
+        this.direction = direction;
         this.lat = lat;
         this.lng = lng;
         this.price = price;
         this.bookings = bookings;
     }
 
-    public Long getId() {
-        return id;
+    public Long getIdCourt() {
+        return idCourt;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdCourt(Long idCourt) {
+        this.idCourt = idCourt;
     }
 
     public User getOwner() {
@@ -60,20 +68,20 @@ public class Court {
         this.owner = owner;
     }
 
-    public String getCourtName() {
-        return courtName;
+    public String getNameCourt() {
+        return nameCourt;
     }
 
-    public void setCourtName(String courtName) {
-        this.courtName = courtName;
+    public void setNameCourt(String nameCourt) {
+        this.nameCourt = nameCourt;
     }
 
-    public String getDireccion() {
-        return direccion;
+    public String getDirection() {
+        return direction;
     }
 
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 
     public Double getLat() {

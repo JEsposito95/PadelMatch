@@ -1,12 +1,12 @@
 package com.padel.app.dto;
 
 public record CourtResponseDTO(
-        Long id,
-        String nombre,
-        String direccion,
+        Long idCourt,
+        String nameCourt,
+        String direction,
         Double lat,
         Double lng,
         Double price,
-        Long ownerId,
-        String ownerName
+        Long idOwner,
+        String nameOwner
 ) {}

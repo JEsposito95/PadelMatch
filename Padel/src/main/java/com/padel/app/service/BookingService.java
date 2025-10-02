@@ -43,11 +43,11 @@ public class BookingService {
     }
 
     public BookingResponseDTO createBooking(BookingDTO dto) {
-        Court court = courtRepository.findById(dto.courtId())
-                .orElseThrow(() -> new RuntimeException("La cancha con id " + dto.courtId() + " no existe"));
+        Court court = courtRepository.findById(dto.idCourt())
+                .orElseThrow(() -> new RuntimeException("La cancha con id " + dto.idCourt() + " no existe"));
 
-        User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new RuntimeException("El usuario con id " + dto.userId() + " no existe"));
+        User user = userRepository.findById(dto.idUser())
+                .orElseThrow(() -> new RuntimeException("El usuario con id " + dto.idUser() + " no existe"));
 
         Booking booking = new Booking();
         booking.setCourt(court);
@@ -72,10 +72,10 @@ public class BookingService {
             throw new RuntimeException("Start time must be before end time");
         }
 
-        Court court = courtRepository.findById(dto.courtId())
+        Court court = courtRepository.findById(dto.idCourt())
                 .orElseThrow(() -> new RuntimeException("Court not found"));
 
-        User user = userRepository.findById(dto.userId())
+        User user = userRepository.findById(dto.idUser())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         booking.setCourt(court);
@@ -84,7 +84,7 @@ public class BookingService {
         booking.setEndTime(dto.endTime());
 
         System.out.printf("Booking %d updated: Court=%s User=%s Start=%s End=%s%n",
-                booking.getId(), court.getCourtName(), user.getNombre(),
+                booking.getIdBooking(), court.getNameCourt(), user.getNameUser(),
                 booking.getStartTime(), booking.getEndTime());
 
         return mapToResponseDTO(bookingRepository.save(booking));
@@ -120,18 +120,18 @@ public class BookingService {
             throw new RuntimeException("Start time must be before end time");
         }
 
-        System.out.printf("Booking %d partially updated: %s%n", booking.getId(), updates);
+        System.out.printf("Booking %d partially updated: %s%n", booking.getIdBooking(), updates);
 
         return mapToResponseDTO(bookingRepository.save(booking));
     }
 
     private BookingResponseDTO mapToResponseDTO(Booking booking) {
         return new BookingResponseDTO(
-                booking.getId(),
-                booking.getCourt().getId(),
-                booking.getCourt().getCourtName(),
-                booking.getCreatedBy().getId(),
-                booking.getCreatedBy().getNombre(),
+                booking.getIdBooking(),
+                booking.getCourt().getIdCourt(),
+                booking.getCourt().getNameCourt(),
+                booking.getCreatedBy().getIdUser(),
+                booking.getCreatedBy().getNameUser(),
                 booking.getStartTime(),
                 booking.getEndTime(),
                 booking.getStatus().name()

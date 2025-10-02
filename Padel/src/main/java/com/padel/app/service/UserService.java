@@ -37,8 +37,8 @@ public class UserService {
                 null,
                 dto.email(),
                 dto.password(),
-                dto.nombre(),
-                dto.fotoUrl(),
+                dto.nameUser(),
+                dto.photoUrl(),
                 User.Role.USER,
                 0,
                 LocalDateTime.now(),
@@ -59,10 +59,10 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        user.setNombre(dto.nombre());
+        user.setNameUser(dto.nameUser());
         user.setEmail(dto.email());
         user.setPassword(dto.password()); // ⚠️ luego encriptamos
-        user.setFotoUrl(dto.fotoUrl());
+        user.setPhotoUrl(dto.photoUrl());
 
         return mapToResponseDTO(userRepository.save(user));
     }
@@ -75,10 +75,10 @@ public class UserService {
         
         updates.forEach((key, value) -> {
             switch (key) {
-                case "nombre" -> user.setNombre((String) value);
+                case "nombre" -> user.setNameUser((String) value);
                 case "email" -> user.setEmail((String) value);
                 case "password" -> user.setPassword((String) value);
-                case "fotoUrl" -> user.setFotoUrl((String) value);
+                case "fotoUrl" -> user.setPhotoUrl((String) value);
                 default -> throw new RuntimeException("Campo no permitido: " + key);
             }
         });
@@ -89,12 +89,12 @@ public class UserService {
 
     private UserResponseDTO mapToResponseDTO(User user) {
         return new UserResponseDTO(
-                user.getId(),
-                user.getNombre(),
+                user.getIdUser(),
+                user.getNameUser(),
                 user.getEmail(),
-                user.getFotoUrl(),
+                user.getPhotoUrl(),
                 user.getRole().name(),
-                user.getPuntos()
+                user.getPoints()
         );
     }
 }

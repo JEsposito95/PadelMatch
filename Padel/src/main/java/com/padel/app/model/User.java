@@ -2,7 +2,6 @@ package com.padel.app.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -13,27 +12,31 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long idUser;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, length = 255)
     private String password;
 
     @Column(nullable = false, length = 100)
-    private String nombre;
+    private String nameUser;
 
-    private String fotoUrl;
+    @Column(name = "foto_url")
+    private String photoUrl;
 
+    @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
     private Role role = Role.USER;
 
-    private Integer puntos = 0;
+    private Integer points = 0;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     public enum Role {
         USER, OWNER, ADMIN
@@ -43,24 +46,37 @@ public class User {
 
     }
 
-    public User(Long id, String email, String password, String nombre, String fotoUrl, Role role, Integer puntos, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
+    public User(Long idUser, String email, String password, String nameUser, String photoUrl, Role role, Integer points, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.idUser = idUser;
         this.email = email;
         this.password = password;
-        this.nombre = nombre;
-        this.fotoUrl = fotoUrl;
+        this.nameUser = nameUser;
+        this.photoUrl = photoUrl;
         this.role = role;
-        this.puntos = puntos;
+        this.points = points;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    public Long getId() {
-        return id;
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+        if (this.points == null) this.points = 0;
+        if (this.role == null) this.role = Role.USER;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public Long getIdUser() {
+        return idUser;
+    }
+
+    public void setIdUser(Long idUser) {
+        this.idUser = idUser;
     }
 
     public String getEmail() {
@@ -79,20 +95,20 @@ public class User {
         this.password = password;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getNameUser() {
+        return nameUser;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setNameUser(String nameUser) {
+        this.nameUser = nameUser;
     }
 
-    public String getFotoUrl() {
-        return fotoUrl;
+    public String getPhotoUrl() {
+        return photoUrl;
     }
 
-    public void setFotoUrl(String fotoUrl) {
-        this.fotoUrl = fotoUrl;
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public Role getRole() {
@@ -103,12 +119,12 @@ public class User {
         this.role = role;
     }
 
-    public Integer getPuntos() {
-        return puntos;
+    public Integer getPoints() {
+        return points;
     }
 
-    public void setPuntos(Integer puntos) {
-        this.puntos = puntos;
+    public void setPoints(Integer points) {
+        this.points = points;
     }
 
     public LocalDateTime getCreatedAt() {

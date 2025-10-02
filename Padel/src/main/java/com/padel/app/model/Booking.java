@@ -1,8 +1,7 @@
 package com.padel.app.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -13,28 +12,31 @@ public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long idBooking;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "court_id", nullable = false)
     private Court court;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @Column(nullable = false)
+    @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 
-    @Column(nullable = false)
+    @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
+    @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Status status = Status.BOOKED;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     public enum Status {
         BOOKED, CANCELLED, COMPLETED
@@ -46,8 +48,8 @@ public class Booking {
     public Booking(Long aLong, Long userId, LocalDateTime localDateTime, LocalDateTime dateTime) {
     }
 
-    public Booking(Long id, Court court, User createdBy, LocalDateTime startTime, LocalDateTime endTime, Status status, LocalDateTime createdAt) {
-        this.id = id;
+    public Booking(Long idBooking, Court court, User createdBy, LocalDateTime startTime, LocalDateTime endTime, Status status, LocalDateTime createdAt) {
+        this.idBooking = idBooking;
         this.court = court;
         this.createdBy = createdBy;
         this.startTime = startTime;
@@ -56,12 +58,12 @@ public class Booking {
         this.createdAt = createdAt;
     }
 
-    public Long getId() {
-        return id;
+    public Long getIdBooking() {
+        return idBooking;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdBooking(Long idBooking) {
+        this.idBooking = idBooking;
     }
 
     public Court getCourt() {

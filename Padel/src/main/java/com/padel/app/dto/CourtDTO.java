@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotNull;
 
 public record CourtDTO(
         @NotBlank(message = "El nombre de la cancha no puede estar vacío")
-        String nombre,
+        String nameCourt,
 
         @NotBlank(message = "La dirección no puede estar vacía")
-        String direccion,
+        String direction,
 
         Double lat,
         Double lng,
@@ -19,5 +19,5 @@ public record CourtDTO(
         Double price,
 
         @NotNull(message = "El ID del dueño es obligatorio")
-        Long ownerId
+        Long idOwner
 ) {}

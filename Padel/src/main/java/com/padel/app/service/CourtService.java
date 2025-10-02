@@ -36,14 +36,14 @@ public class CourtService {
     }
 
     public CourtResponseDTO createCourt(CourtDTO dto) {
-        User owner = userRepository.findById(dto.ownerId())
+        User owner = userRepository.findById(dto.idOwner())
                 .orElseThrow(() -> new RuntimeException("El dueño no existe"));
 
         Court court = new Court(
                 null,
                 owner,
-                dto.nombre(),
-                dto.direccion(),
+                dto.nameCourt(),
+                dto.direction(),
                 dto.lat(),
                 dto.lng(),
                 dto.price(),
@@ -63,13 +63,13 @@ public class CourtService {
         Court court = courtRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Court not found"));
 
-        court.setCourtName(dto.nombre());
-        court.setDireccion(dto.direccion());
+        court.setNameCourt(dto.nameCourt());
+        court.setDirection(dto.direction());
         court.setLat(dto.lat());
         court.setLng(dto.lng());
         court.setPrice(dto.price());
 
-        User owner = userRepository.findById(dto.ownerId())
+        User owner = userRepository.findById(dto.idOwner())
                 .orElseThrow(() -> new RuntimeException("Owner not found"));
         court.setOwner(owner);
 
@@ -84,8 +84,8 @@ public class CourtService {
 
         updates.forEach((key, value) -> {
             switch (key) {
-                case "courtName" -> court.setCourtName((String) value);
-                case "address" -> court.setDireccion((String) value);
+                case "courtName" -> court.setNameCourt((String) value);
+                case "address" -> court.setDirection((String) value);
                 case "lat" -> court.setLat(Double.parseDouble(value.toString()));
                 case "lng" -> court.setLng(Double.parseDouble(value.toString()));
                 case "price" -> court.setPrice(Double.parseDouble(value.toString()));
@@ -104,14 +104,14 @@ public class CourtService {
 
     private CourtResponseDTO mapToResponseDTO(Court court) {
         return new CourtResponseDTO(
-                court.getId(),
-                court.getCourtName(),
-                court.getDireccion(),
+                court.getIdCourt(),
+                court.getNameCourt(),
+                court.getDirection(),
                 court.getLat(),
                 court.getLng(),
                 court.getPrice(),
-                court.getOwner().getId(),
-                court.getOwner().getNombre()
+                court.getOwner().getIdUser(),
+                court.getOwner().getNameUser()
         );
     }
 }

@@ -1,11 +1,11 @@
 package com.padel.app.dto;
 
 public record UserResponseDTO(
-        Long id,
-        String nombre,
+        Long idUser,
+        String nameUser,
         String email,
-        String fotoURL,
+        String photoUrl,
         String role,
-        Integer puntos
+        Integer points
 ) {
 }

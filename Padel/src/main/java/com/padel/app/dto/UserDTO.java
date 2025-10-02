@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record UserDTO(
         @NotBlank(message = "El nombre no puede estar vacío")
-        String nombre,
+        String nameUser,
 
         @Email(message = "Debe ser un email válido")
         @NotBlank(message = "El email no puede estar vacío")
@@ -16,5 +16,5 @@ public record UserDTO(
         @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
         String password,
 
-        String fotoUrl
+        String photoUrl
 ) {}
