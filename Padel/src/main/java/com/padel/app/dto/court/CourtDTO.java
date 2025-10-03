@@ -1,8 +1,10 @@
-package com.padel.app.dto;
+package com.padel.app.dto.court;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
 
 public record CourtDTO(
         @NotBlank(message = "El nombre de la cancha no puede estar vacío")
@@ -16,7 +18,7 @@ public record CourtDTO(
 
         @NotNull(message = "El precio no puede ser nulo")
         @Min(value = 0, message = "El precio debe ser positivo")
-        Double price,
+        BigDecimal price,
 
         @NotNull(message = "El ID del dueño es obligatorio")
         Long idOwner

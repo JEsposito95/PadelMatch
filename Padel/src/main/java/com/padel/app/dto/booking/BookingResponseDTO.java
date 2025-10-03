@@ -1,4 +1,4 @@
-package com.padel.app.dto;
+package com.padel.app.dto.booking;
 
 import java.time.LocalDateTime;
 

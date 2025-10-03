@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
-@Builder
 public class Booking {
 
     @Id
@@ -15,7 +14,7 @@ public class Booking {
     private Long idBooking;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "court_id", nullable = false)
+    @JoinColumn(name = "id_court", nullable = false)
     private Court court;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

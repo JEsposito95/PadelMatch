@@ -1,7 +1,7 @@
 package com.padel.app.controller;
 
-import com.padel.app.dto.BookingDTO;
-import com.padel.app.dto.BookingResponseDTO;
+import com.padel.app.dto.booking.BookingDTO;
+import com.padel.app.dto.booking.BookingResponseDTO;
 import com.padel.app.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

@@ -1,7 +1,7 @@
 package com.padel.app.controller;
 
-import com.padel.app.dto.CourtDTO;
-import com.padel.app.dto.CourtResponseDTO;
+import com.padel.app.dto.court.CourtDTO;
+import com.padel.app.dto.court.CourtResponseDTO;
 import com.padel.app.service.CourtService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

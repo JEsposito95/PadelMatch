@@ -1,7 +1,7 @@
 package com.padel.app.service;
 
-import com.padel.app.dto.CourtDTO;
-import com.padel.app.dto.CourtResponseDTO;
+import com.padel.app.dto.court.CourtDTO;
+import com.padel.app.dto.court.CourtResponseDTO;
 import com.padel.app.model.Court;
 import com.padel.app.model.User;
 import com.padel.app.repository.CourtRepository;
@@ -9,6 +9,7 @@ import com.padel.app.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -88,7 +89,7 @@ public class CourtService {
                 case "address" -> court.setDirection((String) value);
                 case "lat" -> court.setLat(Double.parseDouble(value.toString()));
                 case "lng" -> court.setLng(Double.parseDouble(value.toString()));
-                case "price" -> court.setPrice(Double.parseDouble(value.toString()));
+                case "price" -> court.setPrice(new BigDecimal(value.toString()));
                 case "ownerId" -> {
                     Long ownerId = Long.parseLong(value.toString());
                     User owner = userRepository.findById(ownerId)

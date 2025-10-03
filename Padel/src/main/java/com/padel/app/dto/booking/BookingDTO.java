@@ -1,4 +1,4 @@
-package com.padel.app.dto;
+package com.padel.app.dto.booking;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
