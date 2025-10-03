@@ -2,6 +2,7 @@ package com.padel.app.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,7 +15,7 @@ public class Court {
     private Long idCourt;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @JoinColumn(name = "id_owner", nullable = false)
     private User owner;
 
     @Column(nullable = false, length = 100)
@@ -27,7 +28,7 @@ public class Court {
     private Double lng;
 
     @Column(name = "price", precision = 10, scale = 2)
-    private Double price;
+    private BigDecimal price;
 
     @OneToMany(mappedBy = "court", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Booking> bookings;
@@ -41,7 +42,7 @@ public class Court {
     public Court() {
     }
 
-    public Court(Long idCourt, User owner, String nameCourt, String direction, Double lat, Double lng, Double price, List<Booking> bookings) {
+    public Court(Long idCourt, User owner, String nameCourt, String direction, Double lat, Double lng, BigDecimal price, List<Booking> bookings) {
         this.idCourt = idCourt;
         this.owner = owner;
         this.nameCourt = nameCourt;
@@ -100,11 +101,11 @@ public class Court {
         this.lng = lng;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 

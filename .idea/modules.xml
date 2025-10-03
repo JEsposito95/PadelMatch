@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Padel.iml" filepath="$PROJECT_DIR$/.idea/Padel.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/PadelMatch.iml" filepath="$PROJECT_DIR$/.idea/PadelMatch.iml" />
     </modules>
   </component>

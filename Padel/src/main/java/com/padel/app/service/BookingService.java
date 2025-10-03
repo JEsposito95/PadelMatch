@@ -1,7 +1,7 @@
 package com.padel.app.service;
 
-import com.padel.app.dto.BookingDTO;
-import com.padel.app.dto.BookingResponseDTO;
+import com.padel.app.dto.booking.BookingDTO;
+import com.padel.app.dto.booking.BookingResponseDTO;
 import com.padel.app.model.Booking;
 import com.padel.app.model.Court;
 import com.padel.app.model.User;

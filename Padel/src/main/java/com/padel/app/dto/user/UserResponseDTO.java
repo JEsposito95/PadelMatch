@@ -1,4 +1,4 @@
-package com.padel.app.dto;
+package com.padel.app.dto.user;
 
 public record UserResponseDTO(
         Long idUser,

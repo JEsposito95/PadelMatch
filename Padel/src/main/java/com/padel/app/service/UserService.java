@@ -1,7 +1,7 @@
 package com.padel.app.service;
 
-import com.padel.app.dto.UserDTO;
-import com.padel.app.dto.UserResponseDTO;
+import com.padel.app.dto.user.UserDTO;
+import com.padel.app.dto.user.UserResponseDTO;
 import com.padel.app.model.User;
 import com.padel.app.repository.UserRepository;
 import org.springframework.stereotype.Service;
