@@ -47,42 +47,45 @@ public class BookingService {
 
     @Transactional
     public BookingResponseDTO createBooking(BookingDTO dto) {
+        log.info("Intentando crear reserva: user={}, court={}, start={}, end={}",
+                dto.idUser(), dto.idCourt(), dto.startTime(), dto.endTime());
 
-        // 1️⃣ Validar fechas
-        if (dto.startTime().isAfter(dto.endTime()) || dto.startTime().isEqual(dto.endTime())) {
-            throw new IllegalArgumentException("La hora de inicio debe ser anterior a la hora de fin");
-        }
+        validateBookingDates(dto.startTime(), dto.endTime());
 
-        // 2️⃣ Verificar que existan cancha y usuario
-        Court court = courtRepository.findById(dto.idCourt())
-                .orElseThrow(() -> new EntityNotFoundException("La cancha no existe"));
+        Court court = getCourt(dto.idCourt());
+        User user = getUser(dto.idUser());
 
-        User user = userRepository.findById(dto.idUser())
-                .orElseThrow(() -> new EntityNotFoundException("El usuario no existe"));
+        validateCourtAvailability(court, dto.startTime(), dto.endTime());
 
-        // 3️⃣ Verificar disponibilidad de cancha
-        boolean overlapping = bookingRepository.existsByCourtAndTimeRange(
-                court.getIdCourt(), dto.startTime(), dto.endTime()
-        );
-
-        if (overlapping) {
-            throw new IllegalArgumentException("La cancha no está disponible en ese horario");
-        }
-
-        // 4️⃣ Crear y guardar
-        Booking booking = new Booking();
-        booking.setCourt(court);
-        booking.setCreatedBy(user);
-        booking.setStartTime(dto.startTime());
-        booking.setEndTime(dto.endTime());
-        booking.setStatus(Booking.Status.BOOKED);
-
+        Booking booking = new Booking(court, user, dto.startTime(), dto.endTime());
         Booking saved = bookingRepository.save(booking);
 
-        log.info("Reserva creada: usuario={} cancha={} inicio={} fin={}",
-                user.getEmail(), court.getNameCourt(), dto.startTime(), dto.endTime());
-
+        log.info("Reserva creada exitosamente: bookingId={}, court={}, user={}",
+                saved.getIdBooking(), court.getNameCourt(), user.getNameUser());
         return mapToResponseDTO(saved);
+    }
+
+    private void validateBookingDates(LocalDateTime start, LocalDateTime end) {
+        if (start.isAfter(end) || start.isEqual(end)) {
+            throw new IllegalArgumentException("La hora de inicio debe ser anterior a la hora de fin.");
+        }
+    }
+
+    private Court getCourt(Long courtId) {
+        return courtRepository.findById(courtId)
+                .orElseThrow(() -> new EntityNotFoundException("La cancha no existe."));
+    }
+
+    private User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("El usuario no existe."));
+    }
+
+    private void validateCourtAvailability(Court court, LocalDateTime start, LocalDateTime end) {
+        boolean overlapping = bookingRepository.existsByCourtAndTimeRange(court.getIdCourt(), start, end);
+        if (overlapping) {
+            throw new IllegalArgumentException("La cancha no está disponible en ese horario.");
+        }
     }
 
     public void deleteBooking(Long id) {
@@ -150,6 +153,23 @@ public class BookingService {
 
         return mapToResponseDTO(bookingRepository.save(booking));
     }
+
+    @Transactional
+    public BookingResponseDTO cancelBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("La reserva no existe."));
+
+        if (booking.getStatus() == Booking.Status.CANCELLED) {
+            throw new IllegalStateException("La reserva ya fue cancelada.");
+        }
+
+        booking.setStatus(Booking.Status.CANCELLED);
+        log.info("Reserva cancelada: bookingId={}, user={}",
+                booking.getIdBooking(), booking.getCreatedBy().getEmail());
+
+        return mapToResponseDTO(bookingRepository.save(booking));
+    }
+
 
     private BookingResponseDTO mapToResponseDTO(Booking booking) {
         return new BookingResponseDTO(

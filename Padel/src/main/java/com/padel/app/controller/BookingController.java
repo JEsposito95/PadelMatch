@@ -4,6 +4,7 @@ import com.padel.app.dto.booking.BookingDTO;
 import com.padel.app.dto.booking.BookingResponseDTO;
 import com.padel.app.service.BookingService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,8 +34,9 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<BookingResponseDTO> createBooking(@Valid @RequestBody BookingDTO bookingDTO) {
-        return ResponseEntity.ok(bookingService.createBooking(bookingDTO));
+    public ResponseEntity<BookingResponseDTO> createBooking(@Valid @RequestBody BookingDTO dto) {
+        BookingResponseDTO created = bookingService.createBooking(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @DeleteMapping("/{id}")
@@ -58,5 +60,12 @@ public class BookingController {
     ) {
         return ResponseEntity.ok(bookingService.updateBookingPartial(id, updates));
     }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<BookingResponseDTO> cancelBooking(@PathVariable Long id) {
+        BookingResponseDTO updated = bookingService.cancelBooking(id);
+        return ResponseEntity.ok(updated);
+    }
+
 
 }
