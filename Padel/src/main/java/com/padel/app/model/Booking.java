@@ -2,11 +2,15 @@ package com.padel.app.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
+@EntityListeners(AuditingEntityListener.class)
 public class Booking {
 
     @Id
@@ -31,10 +35,12 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private Status status = Status.BOOKED;
 
-    @Column(name = "created_at", nullable = false)
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     public enum Status {
@@ -45,6 +51,14 @@ public class Booking {
     }
 
     public Booking(Long aLong, Long userId, LocalDateTime localDateTime, LocalDateTime dateTime) {
+    }
+
+    public Booking(Court court, User createdBy, LocalDateTime startTime, LocalDateTime endTime) {
+        this.court = court;
+        this.createdBy = createdBy;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.status = Status.BOOKED;
     }
 
     public Booking(Long idBooking, Court court, User createdBy, LocalDateTime startTime, LocalDateTime endTime, Status status, LocalDateTime createdAt) {

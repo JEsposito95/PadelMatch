@@ -8,6 +8,9 @@ import com.padel.app.model.User;
 import com.padel.app.repository.BookingRepository;
 import com.padel.app.repository.CourtRepository;
 import com.padel.app.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +22,12 @@ import java.util.Optional;
 @Service
 public class BookingService {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final BookingRepository bookingRepository;
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
 
-    public BookingService(BookingRepository bookingRepository,
-                          CourtRepository courtRepository,
+    public BookingService(BookingRepository bookingRepository, CourtRepository courtRepository,
                           UserRepository userRepository) {
         this.bookingRepository = bookingRepository;
         this.courtRepository = courtRepository;
@@ -42,13 +45,31 @@ public class BookingService {
         return bookingRepository.findById(id).map(this::mapToResponseDTO);
     }
 
+    @Transactional
     public BookingResponseDTO createBooking(BookingDTO dto) {
+
+        // 1️⃣ Validar fechas
+        if (dto.startTime().isAfter(dto.endTime()) || dto.startTime().isEqual(dto.endTime())) {
+            throw new IllegalArgumentException("La hora de inicio debe ser anterior a la hora de fin");
+        }
+
+        // 2️⃣ Verificar que existan cancha y usuario
         Court court = courtRepository.findById(dto.idCourt())
-                .orElseThrow(() -> new RuntimeException("La cancha con id " + dto.idCourt() + " no existe"));
+                .orElseThrow(() -> new EntityNotFoundException("La cancha no existe"));
 
         User user = userRepository.findById(dto.idUser())
-                .orElseThrow(() -> new RuntimeException("El usuario con id " + dto.idUser() + " no existe"));
+                .orElseThrow(() -> new EntityNotFoundException("El usuario no existe"));
 
+        // 3️⃣ Verificar disponibilidad de cancha
+        boolean overlapping = bookingRepository.existsByCourtAndTimeRange(
+                court.getIdCourt(), dto.startTime(), dto.endTime()
+        );
+
+        if (overlapping) {
+            throw new IllegalArgumentException("La cancha no está disponible en ese horario");
+        }
+
+        // 4️⃣ Crear y guardar
         Booking booking = new Booking();
         booking.setCourt(court);
         booking.setCreatedBy(user);
@@ -56,7 +77,12 @@ public class BookingService {
         booking.setEndTime(dto.endTime());
         booking.setStatus(Booking.Status.BOOKED);
 
-        return mapToResponseDTO(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        log.info("Reserva creada: usuario={} cancha={} inicio={} fin={}",
+                user.getEmail(), court.getNameCourt(), dto.startTime(), dto.endTime());
+
+        return mapToResponseDTO(saved);
     }
 
     public void deleteBooking(Long id) {
