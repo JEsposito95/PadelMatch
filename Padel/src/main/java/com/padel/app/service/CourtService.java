@@ -6,36 +6,40 @@ import com.padel.app.model.Court;
 import com.padel.app.model.User;
 import com.padel.app.repository.CourtRepository;
 import com.padel.app.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CourtService {
 
+    private static final Logger log = LoggerFactory.getLogger(CourtService.class);
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
 
-    public CourtService(CourtRepository courtRepository, UserRepository userRepository) {
-        this.courtRepository = courtRepository;
-        this.userRepository = userRepository;
-    }
-
     public List<CourtResponseDTO> getAllCourts() {
+        log.info("Obteniendo todas las canchas");
         return courtRepository.findAll()
                 .stream()
                 .map(this::mapToResponseDTO)
                 .toList();
     }
 
-    public Optional<CourtResponseDTO> getCourtById(Long id) {
-        return courtRepository.findById(id).map(this::mapToResponseDTO);
+    public CourtResponseDTO getCourtById(Long id) {
+        Court court = courtRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("La cancha con ID " + id + " no existe."));
+        return mapToResponseDTO(court);
     }
 
+    @Transactional
     public CourtResponseDTO createCourt(CourtDTO dto) {
         User owner = userRepository.findById(dto.idOwner())
                 .orElseThrow(() -> new RuntimeException("El dueño no existe"));
@@ -51,11 +55,18 @@ public class CourtService {
                 null
         );
 
-        return mapToResponseDTO(courtRepository.save(court));
+        Court saved = courtRepository.save(court);
+        log.info("Cancha creada: id={}, nombre={}", saved.getIdCourt(), saved.getNameCourt());
+        return mapToResponseDTO(saved);
     }
 
+    @Transactional
     public void deleteCourt(Long id) {
+        if (!courtRepository.existsById(id)) {
+            throw new EntityNotFoundException("La cancha con ID " + id + " no existe.");
+        }
         courtRepository.deleteById(id);
+        log.info("Cancha eliminada: id={}", id);
     }
 
     //Modificación Cancha
