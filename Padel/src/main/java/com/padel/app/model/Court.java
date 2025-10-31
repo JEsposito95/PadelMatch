@@ -42,6 +42,19 @@ public class Court {
     public Court() {
     }
 
+    public Court(Long idCourt, User owner, String nameCourt, String direction, Double lat, Double lng, BigDecimal price, List<Booking> bookings, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.idCourt = idCourt;
+        this.owner = owner;
+        this.nameCourt = nameCourt;
+        this.direction = direction;
+        this.lat = lat;
+        this.lng = lng;
+        this.price = price;
+        this.bookings = bookings;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public Court(Long idCourt, User owner, String nameCourt, String direction, Double lat, Double lng, BigDecimal price, List<Booking> bookings) {
         this.idCourt = idCourt;
         this.owner = owner;

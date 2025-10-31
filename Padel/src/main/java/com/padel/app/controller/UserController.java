@@ -4,6 +4,7 @@ import com.padel.app.dto.user.UserDTO;
 import com.padel.app.dto.user.UserResponseDTO;
 import com.padel.app.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,14 +28,13 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserDTO userDTO) {
-        return ResponseEntity.ok(userService.createUser(userDTO));
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserDTO dto) {
+        UserResponseDTO created = userService.createUser(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @DeleteMapping("/{id}")

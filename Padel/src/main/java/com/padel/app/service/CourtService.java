@@ -7,23 +7,27 @@ import com.padel.app.model.User;
 import com.padel.app.repository.CourtRepository;
 import com.padel.app.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class CourtService {
 
     private static final Logger log = LoggerFactory.getLogger(CourtService.class);
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
+
+    public CourtService(CourtRepository courtRepository, UserRepository userRepository) {
+        this.courtRepository = courtRepository;
+        this.userRepository = userRepository;
+    }
 
     public List<CourtResponseDTO> getAllCourts() {
         log.info("Obteniendo todas las canchas");
@@ -52,7 +56,9 @@ public class CourtService {
                 dto.lat(),
                 dto.lng(),
                 dto.price(),
-                null
+                null,
+                LocalDateTime.now(),
+                LocalDateTime.now()
         );
 
         Court saved = courtRepository.save(court);
