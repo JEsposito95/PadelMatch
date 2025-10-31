@@ -10,7 +10,7 @@ import java.security.Key;
 import java.util.Date;
 
 @Service
-public class JwtUtil {
+public class JwtService {
 
     @Value("${jwt.secret}")
     private String secretKey;
