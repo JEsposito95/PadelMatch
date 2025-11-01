@@ -4,6 +4,7 @@ import com.padel.app.dto.booking.BookingDTO;
 import com.padel.app.dto.booking.BookingResponseDTO;
 import com.padel.app.service.BookingService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,16 @@ public class BookingController {
         return bookingService.getBookingById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Obtener las reservas de un Usuario
+    @GetMapping("/my-bookings")
+    public ResponseEntity<Page<BookingResponseDTO>> getMyBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status
+    ) {
+        return ResponseEntity.ok(bookingService.getBookingsByAuthenticatedUser(page, size, status));
     }
 
     @PostMapping

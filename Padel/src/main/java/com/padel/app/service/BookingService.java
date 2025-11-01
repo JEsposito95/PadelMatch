@@ -11,6 +11,12 @@ import com.padel.app.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -168,6 +174,45 @@ public class BookingService {
                 booking.getIdBooking(), booking.getCreatedBy().getEmail());
 
         return mapToResponseDTO(bookingRepository.save(booking));
+    }
+
+    //Obtener las reservas del Usuario logueado
+    public List<BookingResponseDTO> getBookingsByAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+
+        return bookingRepository.findByCreatedBy(user)
+                .stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+    }
+
+    //Paginación
+    public Page<BookingResponseDTO> getBookingsByAuthenticatedUser(int page, int size, String statusFilter) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startTime").descending());
+        Page<Booking> bookings;
+
+        if (statusFilter != null && !statusFilter.isBlank()) {
+            try {
+                Booking.Status status = Booking.Status.valueOf(statusFilter.toUpperCase());
+                bookings = bookingRepository.findByCreatedByAndStatus(user, status, pageable);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Estado inválido. Usa BOOKED, CANCELLED o COMPLETED.");
+            }
+        } else {
+            bookings = bookingRepository.findByCreatedBy(user, pageable);
+        }
+
+        return bookings.map(this::mapToResponseDTO);
     }
 
 
