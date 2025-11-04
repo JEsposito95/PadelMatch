@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
@@ -32,4 +33,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Page<Booking> findByCreatedBy(User user, Pageable pageable);
 
     Page<Booking> findByCreatedByAndStatus(User user, Booking.Status status, Pageable pageable);
+
+    // Query para detectar solapamientos en una cancha
+    @Query("""
+           SELECT b FROM Booking b
+           WHERE b.court.idCourt = :courtId
+           AND b.status = 'BOOKED'
+           AND (
+               (b.startTime < :endTime) AND (b.endTime > :startTime)
+           )
+           """)
+    List<Booking> findOverlappingBookings(
+            @Param("courtId") Long courtId,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime
+    );
 }

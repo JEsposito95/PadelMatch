@@ -2,8 +2,10 @@ package com.padel.app.service;
 
 import com.padel.app.dto.court.CourtDTO;
 import com.padel.app.dto.court.CourtResponseDTO;
+import com.padel.app.model.Booking;
 import com.padel.app.model.Court;
 import com.padel.app.model.User;
+import com.padel.app.repository.BookingRepository;
 import com.padel.app.repository.CourtRepository;
 import com.padel.app.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CourtService {
@@ -23,10 +26,12 @@ public class CourtService {
     private static final Logger log = LoggerFactory.getLogger(CourtService.class);
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
-    public CourtService(CourtRepository courtRepository, UserRepository userRepository) {
+    public CourtService(CourtRepository courtRepository, UserRepository userRepository, BookingRepository bookingRepository) {
         this.courtRepository = courtRepository;
         this.userRepository = userRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     public List<CourtResponseDTO> getAllCourts() {
@@ -118,6 +123,27 @@ public class CourtService {
         });
 
         return mapToResponseDTO(courtRepository.save(court));
+    }
+
+    //Disponibilidad de canchas
+    public List<CourtResponseDTO> getAvailableCourts(LocalDateTime startTime, LocalDateTime endTime) {
+        log.info("Buscando disponibilidad entre {} y {}", startTime, endTime);
+
+        // Traemos todas las canchas
+        List<Court> allCourts = courtRepository.findAll();
+
+        // Filtramos las que no tienen solapamientos
+        List<Court> availableCourts = allCourts.stream()
+                .filter(court -> {
+                    List<Booking> overlaps = bookingRepository.findOverlappingBookings(
+                            court.getIdCourt(), startTime, endTime);
+                    return overlaps.isEmpty();
+                })
+                .collect(Collectors.toList());
+
+        return availableCourts.stream()
+                .map(this::mapToResponseDTO)
+                .toList();
     }
 
     private CourtResponseDTO mapToResponseDTO(Court court) {

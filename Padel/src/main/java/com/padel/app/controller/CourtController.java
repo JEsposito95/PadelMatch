@@ -4,10 +4,12 @@ import com.padel.app.dto.court.CourtDTO;
 import com.padel.app.dto.court.CourtResponseDTO;
 import com.padel.app.service.CourtService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +31,15 @@ public class CourtController {
     @GetMapping("/{id}")
     public ResponseEntity<CourtResponseDTO> getCourtById(@PathVariable Long id) {
         return ResponseEntity.ok(courtService.getCourtById(id));
+    }
+
+    @GetMapping("/availability")
+    public ResponseEntity<List<CourtResponseDTO>> getAvailableCourts(
+            @RequestParam("startTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam("endTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
+    ) {
+        List<CourtResponseDTO> available = courtService.getAvailableCourts(startTime, endTime);
+        return ResponseEntity.ok(available);
     }
 
     @PostMapping
