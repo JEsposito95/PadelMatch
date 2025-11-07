@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -40,27 +41,60 @@ public class BookingService {
         this.userRepository = userRepository;
     }
 
-    public List<BookingResponseDTO> getAllBookings() {
+    public List<BookingResponseDTO> getAllBookings(Authentication auth) {
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para ver todas las reservas.");
+        }
+
         return bookingRepository.findAll()
                 .stream()
                 .map(this::mapToResponseDTO)
                 .toList();
     }
 
-    public Optional<BookingResponseDTO> getBookingById(Long id) {
-        return bookingRepository.findById(id).map(this::mapToResponseDTO);
+    public Optional<BookingResponseDTO> getBookingById(Long id, Authentication auth) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada"));
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        if (authUser.getRole() == User.Role.ADMIN) {
+            return Optional.of(mapToResponseDTO(booking));
+        }
+        if (authUser.getRole() == User.Role.OWNER) {
+            if (booking.getCourt().getOwner().getIdUser().equals(authUser.getIdUser())) {
+                return Optional.of(mapToResponseDTO(booking));
+            }
+            throw new AccessDeniedException("No tienes permiso para ver esta reserva.");
+        }
+        // USER: puede ver solo su propia reserva
+        if (booking.getCreatedBy().getIdUser().equals(authUser.getIdUser())) {
+            return Optional.of(mapToResponseDTO(booking));
+        }
+        throw new AccessDeniedException("No tienes permiso para ver esta reserva.");
     }
 
     @Transactional
     public BookingResponseDTO createBooking(BookingDTO dto) {
-        log.info("Intentando crear reserva: user={}, court={}, start={}, end={}",
-                dto.idUser(), dto.idCourt(), dto.startTime(), dto.endTime());
+        log.info("Intentando crear reserva: court={}, start={}, end={}",
+                dto.idCourt(), dto.startTime(), dto.endTime());
 
-        validateBookingDates(dto.startTime(), dto.endTime());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")) && user.getIdUser() != null) {
+            user = userRepository.findById(user.getIdUser()).orElseThrow(() -> new EntityNotFoundException("Usuario destino no encontrado"));
+        }
 
         Court court = getCourt(dto.idCourt());
-        User user = getUser(dto.idUser());
 
+        validateBookingDates(dto.startTime(), dto.endTime());
         validateCourtAvailability(court, dto.startTime(), dto.endTime());
 
         Booking booking = new Booking(court, user, dto.startTime(), dto.endTime());
@@ -101,24 +135,32 @@ public class BookingService {
     @Transactional
     public BookingResponseDTO updateBooking(Long id, BookingDTO dto) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
 
         if (dto.startTime().isAfter(dto.endTime())) {
-            throw new RuntimeException("Start time must be before end time");
+            throw new RuntimeException("La hora de inicio debe ser anterior a la hora de fin.");
         }
 
         Court court = courtRepository.findById(dto.idCourt())
-                .orElseThrow(() -> new RuntimeException("Court not found"));
+                .orElseThrow(() -> new RuntimeException("Cancha no encontrada"));
 
-        User user = userRepository.findById(dto.idUser())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        if (!user.getRole().equals(User.Role.ADMIN) && !user.getRole().equals(User.Role.OWNER)) {
+            if (!booking.getCreatedBy().getIdUser().equals(user.getIdUser())) {
+                throw new AccessDeniedException("No puedes modificar reservas de otros usuarios.");
+            }
+        }
 
         booking.setCourt(court);
         booking.setCreatedBy(user);
         booking.setStartTime(dto.startTime());
         booking.setEndTime(dto.endTime());
 
-        System.out.printf("Booking %d updated: Court=%s User=%s Start=%s End=%s%n",
+        System.out.printf("Reserva %d actualizada: Cancha=%s Usuario=%s Inicio=%s Fin=%s%n",
                 booking.getIdBooking(), court.getNameCourt(), user.getNameUser(),
                 booking.getStartTime(), booking.getEndTime());
 
@@ -127,21 +169,37 @@ public class BookingService {
 
     @Transactional
     public BookingResponseDTO updateBookingPartial(Long id, Map<String, Object> updates) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User authUser = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+        if (authUser.getRole() == User.Role.ADMIN) {
+            // OK
+        } else if (authUser.getRole() == User.Role.OWNER) {
+            if (!booking.getCourt().getOwner().getIdUser().equals(authUser.getIdUser())) {
+                throw new AccessDeniedException("No tienes permiso para modificar/cancelar esta reserva.");
+            }
+        } else { // USER
+            if (!booking.getCreatedBy().getIdUser().equals(authUser.getIdUser())) {
+                throw new AccessDeniedException("No tienes permiso para modificar/cancelar la reserva de otro usuario.");
+            }
+        }
 
         updates.forEach((key, value) -> {
             switch (key) {
                 case "courtId" -> {
                     Long courtId = Long.parseLong(value.toString());
                     Court court = courtRepository.findById(courtId)
-                            .orElseThrow(() -> new RuntimeException("Court not found"));
+                            .orElseThrow(() -> new RuntimeException("Cancha no encontrada"));
                     booking.setCourt(court);
                 }
                 case "userId" -> {
                     Long userId = Long.parseLong(value.toString());
                     User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new RuntimeException("User not found"));
+                            .orElseThrow(() -> new RuntimeException("Usuario no existe"));
                     booking.setCreatedBy(user);
                 }
                 case "startTime" -> booking.setStartTime(LocalDateTime.parse(value.toString()));
@@ -152,10 +210,10 @@ public class BookingService {
         });
 
         if (booking.getStartTime().isAfter(booking.getEndTime())) {
-            throw new RuntimeException("Start time must be before end time");
+            throw new RuntimeException("Tiempo de inicio debe ser anterior al tiempo de finalización.");
         }
 
-        System.out.printf("Booking %d partially updated: %s%n", booking.getIdBooking(), updates);
+        System.out.printf("Reserva %d parcialmente actualizada: %s%n", booking.getIdBooking(), updates);
 
         return mapToResponseDTO(bookingRepository.save(booking));
     }
@@ -163,10 +221,21 @@ public class BookingService {
     @Transactional
     public BookingResponseDTO cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new EntityNotFoundException("La reserva no existe."));
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada"));
 
         if (booking.getStatus() == Booking.Status.CANCELLED) {
             throw new IllegalStateException("La reserva ya fue cancelada.");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        if (!user.getRole().equals(User.Role.ADMIN) && !user.getRole().equals(User.Role.OWNER)) {
+            if (!booking.getCreatedBy().getIdUser().equals(user.getIdUser())) {
+                throw new AccessDeniedException("No puedes cancelar reservas de otros usuarios.");
+            }
         }
 
         booking.setStatus(Booking.Status.CANCELLED);
@@ -214,7 +283,6 @@ public class BookingService {
 
         return bookings.map(this::mapToResponseDTO);
     }
-
 
     private BookingResponseDTO mapToResponseDTO(Booking booking) {
         return new BookingResponseDTO(

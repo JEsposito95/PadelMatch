@@ -8,9 +8,6 @@ public record BookingDTO(
         @NotNull(message = "El ID de la cancha es obligatorio")
         Long idCourt,
 
-        @NotNull(message = "El ID del usuario es obligatorio")
-        Long idUser,
-
         @NotNull(message = "La fecha de inicio es obligatoria")
         @Future(message = "La hora de inicio debe ser en el futuro")
         LocalDateTime startTime,

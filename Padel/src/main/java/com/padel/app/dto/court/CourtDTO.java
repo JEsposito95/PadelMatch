@@ -18,8 +18,5 @@ public record CourtDTO(
 
         @NotNull(message = "El precio no puede ser nulo")
         @Min(value = 0, message = "El precio debe ser positivo")
-        BigDecimal price,
-
-        @NotNull(message = "El ID del dueño es obligatorio")
-        Long idOwner
+        BigDecimal price
 ) {}

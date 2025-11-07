@@ -2,11 +2,15 @@ package com.padel.app.service;
 
 import com.padel.app.dto.user.UserDTO;
 import com.padel.app.dto.user.UserResponseDTO;
+import com.padel.app.dto.user.UserRoleUpdateDTO;
 import com.padel.app.model.User;
 import com.padel.app.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +32,17 @@ public class UserService {
     }
 
     // === Obtener todos los usuarios ===
-    public List<UserResponseDTO> getAllUsers() {
+    public List<UserResponseDTO> getAllUsers(Authentication auth) {
         log.info("Obteniendo todos los usuarios");
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden ver todos los usuarios
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción.");
+        }
+
         return userRepository.findAll()
                 .stream()
                 .map(this::mapToResponseDTO)
@@ -37,16 +50,33 @@ public class UserService {
     }
 
     // === Obtener usuario por ID ===
-    public UserResponseDTO getUserById(Long id) {
+    public UserResponseDTO getUserById(Long id, Authentication auth) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("El usuario con ID " + id + " no existe."));
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden ver todos los usuarios
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción.");
+        }
+
         return mapToResponseDTO(user);
     }
 
     // === Crear usuario ===
     @Transactional
-    public UserResponseDTO createUser(UserDTO dto) {
+    public UserResponseDTO createUser(UserDTO dto, Authentication auth) {
         validateEmail(dto.email());
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden ver todos los usuarios
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción.");
+        }
 
         String encodedPassword = passwordEncoder.encode(dto.password());
 
@@ -69,19 +99,36 @@ public class UserService {
 
     // === Eliminar usuario ===
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id, Authentication auth) {
         if (!userRepository.existsById(id)) {
             throw new EntityNotFoundException("El usuario con ID " + id + " no existe.");
         }
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden ver todos los usuarios
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción.");
+        }
+
         userRepository.deleteById(id);
         log.info("Usuario eliminado: id={}", id);
     }
 
     //Modificar usuario completo
     @Transactional
-    public UserResponseDTO updateUser(Long id, UserDTO dto) {
+    public UserResponseDTO updateUser(Long id, UserDTO dto, Authentication auth) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden ver todos los usuarios
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción.");
+        }
 
         user.setNameUser(dto.nameUser());
         user.setEmail(dto.email());
@@ -93,9 +140,17 @@ public class UserService {
 
     //Modificar usuario parcialmente
     @Transactional
-    public UserResponseDTO updateUserPartial(Long id, Map<String, Object> updates) {
+    public UserResponseDTO updateUserPartial(Long id, Map<String, Object> updates, Authentication auth) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden ver todos los usuarios
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción.");
+        }
         
         updates.forEach((key, value) -> {
             switch (key) {
@@ -108,6 +163,25 @@ public class UserService {
         });
 
         return mapToResponseDTO(userRepository.save(user));
+    }
+
+    //Modificar Rol de Usuario
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void updateUserRole(Long id, UserRoleUpdateDTO dto, Authentication auth) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado."));
+
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden ver todos los usuarios
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción.");
+        }
+
+        user.setRole(dto.role());
+        userRepository.save(user);
     }
 
     // === Validaciones auxiliares ===

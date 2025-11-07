@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,40 +25,49 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingResponseDTO>> getAllBookings() {
-        return ResponseEntity.ok(bookingService.getAllBookings());
+    @PreAuthorize("hasAnyRole('ADMIN','OWNER')")
+    public ResponseEntity<List<BookingResponseDTO>> getAllBookings(Authentication auth) {
+        List<BookingResponseDTO> bookings = bookingService.getAllBookings(auth);
+        return ResponseEntity.ok(bookings);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookingResponseDTO> getBookingById(@PathVariable Long id) {
-        return bookingService.getBookingById(id)
+    @PreAuthorize("hasAnyRole('ADMIN','OWNER','USER')")
+    public ResponseEntity<BookingResponseDTO> getBookingById(@PathVariable Long id, Authentication auth) {
+        return bookingService.getBookingById(id, auth)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     // Obtener las reservas de un Usuario
     @GetMapping("/my-bookings")
-    public ResponseEntity<Page<BookingResponseDTO>> getMyBookings(
+    @PreAuthorize("hasAnyRole('ADMIN','OWNER','USER')")
+    public ResponseEntity<List<BookingResponseDTO>> getMyBookings(
+            Authentication auth,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status
     ) {
-        return ResponseEntity.ok(bookingService.getBookingsByAuthenticatedUser(page, size, status));
+        Page<BookingResponseDTO> res = bookingService.getBookingsByAuthenticatedUser(page, size, status);
+        return ResponseEntity.ok(res.getContent());
     }
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BookingResponseDTO> createBooking(@Valid @RequestBody BookingDTO dto) {
         BookingResponseDTO created = bookingService.createBooking(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteBooking(@PathVariable Long id) {
         bookingService.deleteBooking(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','OWNER') or isAuthenticated()") // el servicio validará si un USER es dueño
     public ResponseEntity<BookingResponseDTO> updateBooking(
             @PathVariable Long id,
             @Valid @RequestBody BookingDTO dto
@@ -65,6 +76,7 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','OWNER') or isAuthenticated()") // el servicio validará si un USER es dueño
     public ResponseEntity<BookingResponseDTO> updateBookingPartial(
             @PathVariable Long id,
             @RequestBody Map<String, Object> updates
@@ -73,6 +85,7 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN','OWNER') or isAuthenticated()") // el servicio validará si un USER es dueño
     public ResponseEntity<BookingResponseDTO> cancelBooking(@PathVariable Long id) {
         BookingResponseDTO updated = bookingService.cancelBooking(id);
         return ResponseEntity.ok(updated);

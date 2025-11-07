@@ -11,6 +11,8 @@ import com.padel.app.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,81 +50,109 @@ public class CourtService {
         return mapToResponseDTO(court);
     }
 
+    // === Crear cancha ===
     @Transactional
-    public CourtResponseDTO createCourt(CourtDTO dto) {
-        User owner = userRepository.findById(dto.idOwner())
-                .orElseThrow(() -> new RuntimeException("El dueño no existe"));
+    public CourtResponseDTO createCourt(CourtDTO dto, Authentication auth) {
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Solo OWNER o ADMIN pueden crear
+        if (authUser.getRole() == User.Role.USER) {
+            throw new AccessDeniedException("No tienes permiso para crear una cancha.");
+        }
+
+        if (dto.price().compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("El precio debe ser mayor que 0.");
 
         Court court = new Court(
                 null,
-                owner,
+                authUser, // 🔥 el dueño será el usuario autenticado
                 dto.nameCourt(),
                 dto.direction(),
                 dto.lat(),
                 dto.lng(),
                 dto.price(),
-                null,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                null
         );
 
-        Court saved = courtRepository.save(court);
-        log.info("Cancha creada: id={}, nombre={}", saved.getIdCourt(), saved.getNameCourt());
-        return mapToResponseDTO(saved);
+        courtRepository.save(court);
+        log.info("Cancha creada por {} - {}", authUser.getEmail(), dto.nameCourt());
+
+        return mapToResponseDTO(court);
     }
 
+    //Modificación Parcial
     @Transactional
-    public void deleteCourt(Long id) {
-        if (!courtRepository.existsById(id)) {
-            throw new EntityNotFoundException("La cancha con ID " + id + " no existe.");
-        }
-        courtRepository.deleteById(id);
-        log.info("Cancha eliminada: id={}", id);
-    }
+    public CourtResponseDTO updateCourtPartialIfAllowed(Long id, Map<String, Object> updates, Authentication auth) {
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
 
-    //Modificación Cancha
-    @Transactional
-    public CourtResponseDTO updateCourt(Long id, CourtDTO dto) {
         Court court = courtRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Court not found"));
+                .orElseThrow(() -> new RuntimeException("Cancha no encontrada"));
 
+        validateOwnershipOrAdmin(authUser, court);
+
+        try {
+            updates.forEach((key, value) -> {
+                switch (key) {
+                    case "nameCourt" -> court.setNameCourt((String) value);
+                    case "direction" -> court.setDirection((String) value);
+                    case "lat" -> court.setLat(Double.parseDouble(value.toString()));
+                    case "lng" -> court.setLng(Double.parseDouble(value.toString()));
+                    case "price" -> court.setPrice(new BigDecimal(value.toString()));
+                    // no permitir cambiar owner desde partial
+                    default -> throw new IllegalArgumentException("Campo no permitido: " + key);
+                }
+            });
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Formato de número inválido en los campos numéricos.");
+        }
+
+        return mapToResponseDTO(courtRepository.save(court));
+    }
+
+    // === Actualizar cancha ===
+    @Transactional
+    public CourtResponseDTO updateCourtIfAllowed(Long id, CourtDTO dto, Authentication auth) {
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        Court court = courtRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cancha no encontrada"));
+
+        // 🔐 Validar si el owner está intentando modificar su propia cancha
+        validateOwnershipOrAdmin(authUser, court);
+
+        // ADMIN puede modificar cualquier cancha
         court.setNameCourt(dto.nameCourt());
         court.setDirection(dto.direction());
         court.setLat(dto.lat());
         court.setLng(dto.lng());
         court.setPrice(dto.price());
 
-        User owner = userRepository.findById(dto.idOwner())
-                .orElseThrow(() -> new RuntimeException("Owner not found"));
-        court.setOwner(owner);
+        courtRepository.save(court);
+        log.info("Cancha actualizada por {} - {}", authUser.getEmail(), dto.nameCourt());
 
-        return mapToResponseDTO(courtRepository.save(court));
+        return mapToResponseDTO(court);
     }
 
-    //Modificación Parcial
+    // === Eliminar cancha ===
     @Transactional
-    public CourtResponseDTO updateCourtPartial(Long id, Map<String, Object> updates) {
+    public void deleteCourtIfAllowed(Long id, Authentication auth) {
+        User authUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
         Court court = courtRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Court not found"));
+                .orElseThrow(() -> new RuntimeException("Cancha no encontrada"));
 
-        updates.forEach((key, value) -> {
-            switch (key) {
-                case "courtName" -> court.setNameCourt((String) value);
-                case "address" -> court.setDirection((String) value);
-                case "lat" -> court.setLat(Double.parseDouble(value.toString()));
-                case "lng" -> court.setLng(Double.parseDouble(value.toString()));
-                case "price" -> court.setPrice(new BigDecimal(value.toString()));
-                case "ownerId" -> {
-                    Long ownerId = Long.parseLong(value.toString());
-                    User owner = userRepository.findById(ownerId)
-                            .orElseThrow(() -> new RuntimeException("Owner not found"));
-                    court.setOwner(owner);
-                }
-                default -> throw new RuntimeException("Campo no permitido: " + key);
-            }
-        });
+        if (!court.getBookings().isEmpty()) {
+            throw new IllegalStateException("No se puede eliminar una cancha con reservas activas.");
+        }
 
-        return mapToResponseDTO(courtRepository.save(court));
+        validateOwnershipOrAdmin(authUser, court);
+
+        courtRepository.delete(court);
+        log.info("Cancha eliminada por {} - {}", authUser.getEmail(), court.getNameCourt());
     }
 
     //Disponibilidad de canchas
@@ -158,4 +188,12 @@ public class CourtService {
                 court.getOwner().getNameUser()
         );
     }
+
+    private void validateOwnershipOrAdmin(User authUser, Court court) {
+        if (authUser.getRole() == User.Role.OWNER &&
+                !court.getOwner().getIdUser().equals(authUser.getIdUser())) {
+            throw new AccessDeniedException("No tienes permiso para modificar esta cancha.");
+        }
+    }
+
 }
