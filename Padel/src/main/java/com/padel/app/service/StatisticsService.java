@@ -1,6 +1,7 @@
 package com.padel.app.service;
 
-import com.padel.app.dto.AdminStatsDTO;
+import com.padel.app.dto.statistics.AdminStatsDTO;
+import com.padel.app.dto.statistics.TopCourtDTO;
 import com.padel.app.model.Booking;
 import com.padel.app.repository.BookingRepository;
 import com.padel.app.repository.CourtRepository;
@@ -26,27 +27,32 @@ public class StatisticsService {
     }
 
     public AdminStatsDTO getAdminStatistics() {
-        long totalUsuarios = userRepository.count();
-        long totalCanchas = courtRepository.count();
-        long totalReservas = bookingRepository.count();
+        long totalUsers = userRepository.count();
+        long totalCourts = courtRepository.count();
+        long totalBookings = bookingRepository.count();
 
-        double promedioReservasPorUsuario = totalUsuarios == 0
+        double avgBookingsPerUser = totalUsers == 0
                 ? 0
-                : (double) totalReservas / totalUsuarios;
+                : (double) totalBookings / totalUsers;
 
         // Suma total de precios de las reservas (si el booking tiene cancha asociada con precio)
         List<Booking> bookings = bookingRepository.findAll();
-        BigDecimal ingresosTotales = bookings.stream()
+        BigDecimal totalIncome = bookings.stream()
                 .filter(b -> b.getCourt() != null && b.getCourt().getPrice() != null)
                 .map(b -> b.getCourt().getPrice())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new AdminStatsDTO(
-                totalUsuarios,
-                totalCanchas,
-                totalReservas,
-                promedioReservasPorUsuario,
-                ingresosTotales
+                totalUsers,
+                totalCourts,
+                totalBookings,
+                avgBookingsPerUser,
+                totalIncome
         );
     }
+
+    public List<TopCourtDTO> getTopCourts() {
+        return bookingRepository.findTopCourts();
+    }
+
 }

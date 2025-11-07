@@ -1,5 +1,6 @@
 package com.padel.app.repository;
 
+import com.padel.app.dto.statistics.TopCourtDTO;
 import com.padel.app.model.Booking;
 import com.padel.app.model.User;
 import org.springframework.data.domain.Page;
@@ -48,4 +49,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
+
+    // Buscar las canchas más reservadas
+    @Query("""
+            SELECT new com.padel.app.dto.statistics.TopCourtDTO(
+                b.court.idCourt,
+                b.court.nameCourt,
+                COUNT(b)
+            )
+            FROM Booking b
+            WHERE b.status = 'BOOKED'
+            GROUP BY b.court.idCourt, b.court.nameCourt
+            ORDER BY COUNT(b) DESC
+            """)
+    List<TopCourtDTO> findTopCourts();
+
 }
