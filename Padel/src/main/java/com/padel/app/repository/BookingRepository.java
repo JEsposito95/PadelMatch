@@ -1,6 +1,7 @@
 package com.padel.app.repository;
 
 import com.padel.app.dto.statistics.TopCourtDTO;
+import com.padel.app.dto.statistics.TopUserDTO;
 import com.padel.app.model.Booking;
 import com.padel.app.model.User;
 import org.springframework.data.domain.Page;
@@ -63,5 +64,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             ORDER BY COUNT(b) DESC
             """)
     List<TopCourtDTO> findTopCourts();
+
+    // Usuarios con más reservas
+    @Query("""
+        SELECT new com.padel.app.dto.statistics.TopUserDTO(
+            b.createdBy.idUser,
+            b.createdBy.nameUser,
+            b.createdBy.email,
+            COUNT(b)
+        )
+        FROM Booking b
+        WHERE b.status = 'BOOKED'
+        GROUP BY b.createdBy.idUser, b.createdBy.nameUser, b.createdBy.email
+        ORDER BY COUNT(b) DESC
+        """)
+    List<TopUserDTO> findTopUsers();
+
 
 }

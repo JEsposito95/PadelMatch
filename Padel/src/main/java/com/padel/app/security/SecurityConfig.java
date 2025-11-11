@@ -36,10 +36,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()  // registro y login
+                        .requestMatchers("/api/auth/**", "/api/health").permitAll()  // registro y login
                         .requestMatchers("/api/courts/availability", "/api/courts").permitAll() // todos pueden ver
                         .requestMatchers("/api/bookings/**").hasAnyRole("USER", "OWNER", "ADMIN") // solo logueados
                         .requestMatchers("/api/users/**").hasAnyRole("OWNER", "ADMIN") // solo owners y admin
+                        .requestMatchers("/api/statistics/**").hasRole("ADMIN")
                         .anyRequest().authenticated()               // resto requiere login
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

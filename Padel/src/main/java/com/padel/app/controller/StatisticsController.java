@@ -2,6 +2,7 @@ package com.padel.app.controller;
 
 import com.padel.app.dto.statistics.AdminStatsDTO;
 import com.padel.app.dto.statistics.TopCourtDTO;
+import com.padel.app.dto.statistics.TopUserDTO;
 import com.padel.app.service.StatisticsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,16 +23,24 @@ public class StatisticsController {
     }
 
     // === Estadísticas globales para ADMIN ===
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminStatsDTO> getAdminStatistics() {
         return ResponseEntity.ok(statisticsService.getAdminStatistics());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/top-courts")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TopCourtDTO>> getTopCourts() {
         return ResponseEntity.ok(statisticsService.getTopCourts());
+    }
+
+    // === Usuarios con más reservaciones ===
+    @GetMapping("/top-users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<TopUserDTO>> getTopUsers() {
+        List<TopUserDTO> topUsers = statisticsService.getTopUsers();
+        return ResponseEntity.ok(topUsers);
     }
 
 }

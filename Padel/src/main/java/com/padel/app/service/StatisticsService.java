@@ -2,6 +2,7 @@ package com.padel.app.service;
 
 import com.padel.app.dto.statistics.AdminStatsDTO;
 import com.padel.app.dto.statistics.TopCourtDTO;
+import com.padel.app.dto.statistics.TopUserDTO;
 import com.padel.app.model.Booking;
 import com.padel.app.repository.BookingRepository;
 import com.padel.app.repository.CourtRepository;
@@ -53,6 +54,10 @@ public class StatisticsService {
 
     public List<TopCourtDTO> getTopCourts() {
         return bookingRepository.findTopCourts();
+    }
+
+    public List<TopUserDTO> getTopUsers() {
+        return bookingRepository.findTopUsers();
     }
 
 }

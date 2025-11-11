@@ -59,4 +59,14 @@ public class JwtService {
                 .getExpiration()
                 .before(new Date());
     }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+
 }
