@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/bookings/**").hasAnyRole("USER", "OWNER", "ADMIN") // solo logueados
                         .requestMatchers("/api/users/**").hasAnyRole("OWNER", "ADMIN") // solo owners y admin
                         .requestMatchers("/api/statistics/**").hasRole("ADMIN")
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()               // resto requiere login
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
