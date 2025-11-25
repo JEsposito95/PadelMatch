@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-@Schema(name = "LoginRequest", description = "Credenciales de acceso.")
-public record LoginRequest(
+@Schema(name = "LoginRequestDTO", description = "Credenciales de acceso.")
+public record LoginRequestDTO(
 
         @Schema(example = "email@example.com")
         @Email(message = "Debe ser un email válido")

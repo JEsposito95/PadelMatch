@@ -1,8 +1,9 @@
 package com.padel.app.controller;
 
-import com.padel.app.dto.auth.AuthResponse;
-import com.padel.app.dto.auth.LoginRequest;
-import com.padel.app.dto.auth.RegisterRequest;
+import com.padel.app.dto.auth.AuthResponseDTO;
+import com.padel.app.dto.auth.LoginRequestDTO;
+import com.padel.app.dto.auth.RegisterRequestDTO;
+import com.padel.app.dto.auth.RegisterResponseDTO;
 import com.padel.app.dto.user.UserResponseDTO;
 import com.padel.app.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,8 +47,8 @@ public class AuthController {
             }
     )
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
+    public ResponseEntity<RegisterResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
+        RegisterResponseDTO response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -59,7 +60,7 @@ public class AuthController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Login correcto",
-                            content = @Content(schema = @Schema(implementation = AuthResponse.class))
+                            content = @Content(schema = @Schema(implementation = AuthResponseDTO.class))
                     ),
                     @ApiResponse(
                             responseCode = "401",
@@ -68,8 +69,8 @@ public class AuthController {
             }
     )
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
+    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
+        AuthResponseDTO response = authService.login(request);
         return ResponseEntity.ok(response);
     }
 }

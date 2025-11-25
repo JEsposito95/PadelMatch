@@ -1,8 +1,10 @@
 package com.padel.app.service;
 
-import com.padel.app.dto.auth.AuthResponse;
-import com.padel.app.dto.auth.LoginRequest;
-import com.padel.app.dto.auth.RegisterRequest;
+import com.padel.app.dto.auth.AuthResponseDTO;
+import com.padel.app.dto.auth.LoginRequestDTO;
+import com.padel.app.dto.auth.RegisterRequestDTO;
+import com.padel.app.dto.auth.RegisterResponseDTO;
+import com.padel.app.exception.GlobalExceptionHandler;
 import com.padel.app.model.User;
 import com.padel.app.repository.UserRepository;
 import com.padel.app.security.JwtService;
@@ -35,7 +37,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public RegisterResponseDTO register(RegisterRequestDTO request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Ya existe un usuario con ese correo electrónico.");
         }
@@ -54,23 +56,23 @@ public class AuthService {
         log.info("Usuario registrado: {}", user.getEmail());
 
         String token = jwtService.generateToken(user);
-        return new AuthResponse(token);
+        return new RegisterResponseDTO(user.getEmail(), token);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponseDTO login(LoginRequestDTO request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
         } catch (AuthenticationException e) {
-            throw new IllegalArgumentException("Credenciales inválidas.");
+            throw new GlobalExceptionHandler.UnauthorizedException("Credenciales inválidas.");
         }
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+                .orElseThrow(() -> new GlobalExceptionHandler.UnauthorizedException("Usuario no encontrado."));
 
         String token = jwtService.generateToken(user);
         log.info("Usuario autenticado: {} (ID: {})", user.getEmail(), user.getIdUser());
-        return new AuthResponse(token);
+        return new AuthResponseDTO(token);
     }
 }

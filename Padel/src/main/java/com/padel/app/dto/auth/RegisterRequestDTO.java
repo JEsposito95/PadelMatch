@@ -5,8 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-@Schema(name = "RegisterRequest", description = "Datos necesarios para registrar un usuario.")
-public record RegisterRequest(
+@Schema(name = "RegisterRequestDTO", description = "Datos necesarios para registrar un usuario.")
+public record RegisterRequestDTO(
 
         @Schema(example = "Nombre")
         @NotBlank(message = "El nombre no puede estar vacío")

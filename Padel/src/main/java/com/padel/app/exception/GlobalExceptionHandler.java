@@ -8,6 +8,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -34,8 +35,8 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String,Object>> handleRuntime(RuntimeException ex) {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String,Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
@@ -56,4 +57,12 @@ public class GlobalExceptionHandler {
         body.put("message", msg);
         return ResponseEntity.status(status).body(body);
     }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public static class UnauthorizedException extends RuntimeException {
+        public UnauthorizedException(String message) {
+            super(message);
+        }
+    }
+
 }
