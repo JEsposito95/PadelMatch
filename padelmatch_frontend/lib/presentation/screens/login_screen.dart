@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'login_provider.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -70,6 +71,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   )
                 ],
               ),
+            ),
+            // TextButton de Registrarse
+            TextButton(
+              onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  );
+                },
+              child: const Text("¿No tenés cuenta? Registrate"),
             ),
           ],
         ),
