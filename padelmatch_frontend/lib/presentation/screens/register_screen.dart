@@ -2,87 +2,129 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'register_provider.dart';
 
-class RegisterScreen extends ConsumerWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(registerNotifierProvider);
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+}
 
-    // Controllers
-    final nameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final passCtrl = TextEditingController();
-    final pass2Ctrl = TextEditingController();
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passController = TextEditingController();
+  final photoUrlController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    final registerState = ref.watch(registerNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Registrarse")),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      appBar: AppBar(title: const Text("Crear cuenta")),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
+            // Nombre
             TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: "Nombre"),
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: "Nombre",
+              ),
             ),
+            const SizedBox(height: 10),
+
+            // Email
             TextField(
-              controller: emailCtrl,
-              decoration: const InputDecoration(labelText: "Email"),
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: "Email",
+              ),
             ),
+            const SizedBox(height: 10),
+
+            // Contraseña
             TextField(
-              controller: passCtrl,
-              decoration: const InputDecoration(labelText: "Contraseña"),
+              controller: passController,
+              decoration: const InputDecoration(
+                labelText: "Contraseña",
+              ),
               obscureText: true,
             ),
+            const SizedBox(height: 10),
+
+            // Foto opcional
             TextField(
-              controller: pass2Ctrl,
-              decoration: const InputDecoration(labelText: "Repetir contraseña"),
-              obscureText: true,
+              controller: photoUrlController,
+              decoration: const InputDecoration(
+                labelText: "URL de Foto (opcional)",
+              ),
             ),
             const SizedBox(height: 20),
 
-            state.when(
-              data: (_) => ElevatedButton(
-                onPressed: () async {
-                  final name = nameCtrl.text.trim();
-                  final email = emailCtrl.text.trim();
-                  final pass1 = passCtrl.text.trim();
-                  final pass2 = pass2Ctrl.text.trim();
+            // ESTADO DEL REGISTER
+            registerState.when(
+              data: (value) {
+                return ElevatedButton(
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    final email = emailController.text.trim();
+                    final pass = passController.text.trim();
+                    final photoUrl = photoUrlController.text.trim().isEmpty
+                        ? null
+                        : photoUrlController.text.trim();
 
-                  if (pass1 != pass2) {
-                    ScaffoldMessenger.of(context)
-                      .showSnackBar(const SnackBar(content: Text("Las contraseñas no coinciden")));
-                    return;
-                  }
+                    if (name.isEmpty || email.isEmpty || pass.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Hay campos obligatorios vacíos")),
+                      );
+                      return;
+                    }
 
-                  await ref.read(registerNotifierProvider.notifier)
-                    .register(name, email, pass1, "");
-
-                  if (ref.read(registerNotifierProvider).value != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Usuario registrado con éxito"))
+                    await ref.read(registerNotifierProvider.notifier).register(
+                      name,
+                      email,
+                      pass,
+                      photoUrl ?? "",
                     );
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text("Registrarme"),
-              ),
+
+                    final result = ref.read(registerNotifierProvider);
+
+                    if (result.hasValue) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Registro exitoso")),
+                      );
+                      Navigator.pop(context); // Volver al login
+                    }
+                  },
+                  child: const Text("Registrarme"),
+                );
+              },
+
               loading: () => const CircularProgressIndicator(),
-              error: (err, st) => Column(
+
+              error: (err, stack) => Column(
                 children: [
                   Text(err.toString(), style: const TextStyle(color: Colors.red)),
                   ElevatedButton(
-                    onPressed: () {
-                      final name = nameCtrl.text.trim();
-                      final email = emailCtrl.text.trim();
-                      final pass = passCtrl.text.trim();
-                      ref.read(registerNotifierProvider.notifier).register(name, email, pass, "");
+                    onPressed: () async {
+                      final name = nameController.text.trim();
+                      final email = emailController.text.trim();
+                      final pass = passController.text.trim();
+                      final photoUrl = photoUrlController.text.trim();
+
+                      await ref.read(registerNotifierProvider.notifier).register(
+                        name,
+                        email,
+                        pass,
+                        photoUrl,
+                      );
                     },
                     child: const Text("Reintentar"),
-                  ),
+                  )
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
