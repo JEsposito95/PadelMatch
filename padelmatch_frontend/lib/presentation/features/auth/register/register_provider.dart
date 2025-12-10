@@ -1,32 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../services/auth_service.dart';
 
-final registerProvider =
-    StateNotifierProvider<RegisterNotifier, AsyncValue<String?>>(
-  (ref) => RegisterNotifier(),
-);
+final registerNotifierProvider =
+    AsyncNotifierProvider<RegisterNotifier, String?>(RegisterNotifier.new);
 
-class RegisterNotifier extends StateNotifier<AsyncValue<String?>> {
-  RegisterNotifier() : super(const AsyncValue.data(null));
-
-  final Dio _dio = Dio();
+class RegisterNotifier extends AsyncNotifier<String?> {
+  @override
+  Future<String?> build() async => null;
 
   Future<void> register(String name, String email, String password) async {
     state = const AsyncValue.loading();
-
     try {
-      final url = "${dotenv.env['API_URL']}/api/auth/register";
-
-      final response = await _dio.post(url, data: {
-        "name": name,
-        "email": email,
-        "password": password,
-      });
-
-      final token = response.data["token"];
+      final auth = ref.read(authServiceProvider);
+      final token = await auth.register(
+        name: name,
+        email: email,
+        password: password,
+      );
       state = AsyncValue.data(token);
-
     } catch (e, st) {
       state = AsyncValue.error(e.toString(), st);
     }

@@ -1,29 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/services/auth_service.dart';
 
-// PROVIDER MODERNO (Riverpod 3.x)
 final loginNotifierProvider =
-    NotifierProvider<LoginNotifier, AsyncValue<String?>>(
-  () => LoginNotifier(),
-);
+    AsyncNotifierProvider<LoginNotifier, String?>(LoginNotifier.new);
 
-class LoginNotifier extends Notifier<AsyncValue<String?>> {
+class LoginNotifier extends AsyncNotifier<String?> {
   @override
-  AsyncValue<String?> build() {
-    // Estado inicial
-    return const AsyncValue.data(null);
-  }
+  Future<String?> build() async => null;
 
   Future<void> login(String email, String password) async {
     state = const AsyncValue.loading();
-
     try {
-      // simula una petición a backend
-      await Future.delayed(const Duration(seconds: 2));
-      const fakeToken = "fake_token_123";
-
-      state = const AsyncValue.data(fakeToken);
+      final auth = ref.read(authServiceProvider);
+      final token = await auth.login(email, password);
+      state = AsyncValue.data(token);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = AsyncValue.error(e.toString(), st);
     }
   }
 }

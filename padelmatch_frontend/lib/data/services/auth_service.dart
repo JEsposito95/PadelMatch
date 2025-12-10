@@ -1,22 +1,57 @@
 import 'package:dio/dio.dart';
-import '../../core/api/dio_client.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
-  final DioClient _client = DioClient();
+  final Dio _dio = Dio(
+    BaseOptions(
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+    ),
+  );
 
   Future<String> login(String email, String password) async {
-    try {
-      final response = await _client.dio.post(
-        "/auth/login",
-        data: {
-          "email": email,
-          "password": password,
-        },
-      );
+    final url = "${dotenv.env['API_URL']}/api/auth/login";
 
-      return response.data["token"]; // OK
-    } on DioException catch (e) {
-      throw Exception(e.response?.data["message"] ?? "Error inesperado");
-    }
+    final response = await _dio.post(
+      url,
+      data: {
+        "email": email,
+        "password": password,
+      },
+      options: Options(
+        contentType: Headers.jsonContentType,
+      ),
+    );
+
+    return response.data["token"];
+  }
+
+  Future<String> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final url = "${dotenv.env['API_URL']}/api/auth/register";
+
+    final response = await _dio.post(
+      url,
+      data: {
+        "name": name,
+        "email": email,
+        "password": password,
+      },
+      options: Options(
+        contentType: Headers.jsonContentType,
+      ),
+    );
+
+    return response.data["token"];
   }
 }
+
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService();
+});
